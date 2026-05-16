@@ -83,7 +83,7 @@ export default function Dashboard() {
                     <div style={{ position: 'absolute', top: '-20px', right: '-20px', fontSize: '8rem', opacity: 0.05 }}>⛓</div>
                     <span style={{ display: 'block', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '2px', marginBottom: '8px' }}>NETWORK TIER</span>
                     <div style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', color: 'var(--accent-purple)', lineHeight: 1.2, marginTop: '10px' }}>
-                        POLYGON<br/>AMOY L2
+                        POLYGON<br />AMOY L2
                     </div>
                 </div>
 
@@ -103,7 +103,7 @@ export default function Dashboard() {
             {/* Main Content Area */}
             <div>
                 <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'white', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ width: '12px', height: '12px', background: 'var(--accent-secondary)', display: 'inline-block' }} /> 
+                    <span style={{ width: '12px', height: '12px', background: 'var(--accent-secondary)', display: 'inline-block' }} />
                     RECENT OPERATIONS
                 </h2>
 

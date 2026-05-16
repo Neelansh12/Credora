@@ -31,12 +31,15 @@ export default function Login() {
         setError('');
 
         setTimeout(() => {
-            if (formData.email && formData.password) {
+            if (formData.email && formData.password === 'admin123') {
                 setIsLoading(false);
                 localStorage.setItem('isAuthenticated', 'true');
                 window.location.href = '/dashboard';
-            } else {
+            } else if (formData.email && formData.password) {
                 setError('AUTH_FAILED: INVALID CREDENTIALS');
+                setIsLoading(false);
+            } else {
+                setError('DATA_MISSING: ALL FIELDS REQUIRED');
                 setIsLoading(false);
             }
         }, 1500);

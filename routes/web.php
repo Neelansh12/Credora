@@ -1,16 +1,22 @@
 <?php
 
 use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-// Upload routes
-Route::get('/upload',  [CertificateController::class, 'index'])->name('upload.index');
+// ── API Routes (JSON) ────────────────────────────────────────────────
+// These are called by the React frontend via fetch()
+
 Route::post('/upload', [CertificateController::class, 'store'])->name('upload.store');
+Route::post('/verify', [CertificateController::class, 'verifyJson'])->name('verify.json');
 
-// Verification route
-Route::get('/verify',  [CertificateController::class, 'verify'])->name('verify');
+Route::get('/api/dashboard', [DashboardController::class, 'index']);
+Route::get('/api/certificate/{id}', [CertificateController::class, 'showJson']);
+Route::post('/api/revoke', [CertificateController::class, 'revokeJson']);
 
-// Home redirect
-Route::get('/', function () {
-    return view('welcome');
-});
+// ── SPA Catch-all ────────────────────────────────────────────────────
+// All frontend routes are handled by React Router.
+// This must be the LAST route definition.
+Route::get('/{any}', function () {
+    return view('app');
+})->where('any', '.*');

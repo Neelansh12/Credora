@@ -1,8 +1,12 @@
 *.log
 .DS_Store
+
+# Environment files
 .env
 .env.backup
 .env.production
+
+# Laravel / PHP
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -12,7 +16,6 @@
 /.vscode
 /.zed
 /auth.json
-/node_modules
 /public/build
 /public/hot
 /public/storage
@@ -22,3 +25,21 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Node
+/node_modules
+
+# Hardhat
+/cache
+/artifacts
+
+# TypeChain
+/typechain
+/typechain-types
+
+# Solidity Coverage
+/coverage
+/coverage.json
+
+# Hardhat Ignition
+ignition/deployments/chain-31337

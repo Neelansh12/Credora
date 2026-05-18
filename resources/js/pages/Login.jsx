@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import CyberCard from '../components/CyberCard';
 import GlitchText from '../components/GlitchText';
 
-export default function Login() {
+export default function Login({ setUser }) {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
@@ -26,24 +26,46 @@ export default function Login() {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError('');
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-        setTimeout(() => {
-            if (formData.email && formData.password === 'admin123') {
-                setIsLoading(false);
-                localStorage.setItem('isAuthenticated', 'true');
-                window.location.href = '/dashboard';
-            } else if (formData.email && formData.password) {
-                setError('AUTH_FAILED: INVALID CREDENTIALS');
-                setIsLoading(false);
-            } else {
-                setError('DATA_MISSING: ALL FIELDS REQUIRED');
-                setIsLoading(false);
-            }
-        }, 1500);
-    };
+    try {
+        // Get CSRF cookie first
+        await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' });
+
+        const xsrfToken = decodeURIComponent(
+            document.cookie
+                .split('; ')
+                .find(row => row.startsWith('XSRF-TOKEN='))
+                ?.split('=')[1] || ''
+        );
+
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': xsrfToken,
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ email: formData.email, password: formData.password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            setUser({ role: data.role, name: data.name, email: data.email });
+            window.location.href = '/dashboard';
+        } else {
+            setError('AUTH_FAILED: ' + (data.message || 'INVALID CREDENTIALS'));
+        }
+    } catch (err) {
+        setError('NETWORK_ERROR: UNABLE TO REACH AUTH SERVER');
+    } finally {
+        setIsLoading(false);
+    }
+};
 
     return (
         <div style={{ maxWidth: '540px', width: '100%', margin: '0 auto', padding: '0 16px', position: 'relative', zIndex: 10 }}>

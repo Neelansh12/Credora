@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import GlitchText from '../components/GlitchText';
 import HashDisplay from '../components/HashDisplay';
 
-export default function Dashboard() {
+export default function Dashboard({ user }) {
     const [stats, setStats] = useState({ total: 0, recent: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -16,12 +16,13 @@ export default function Dashboard() {
                     credentials: 'same-origin'
                 });
                 if (response.ok) {
-                    const data = await response.json();
-                    setStats(data);
-                } else {
-                    // Fallback to dummy data if not connected
-                    throw new Error("No backend");
-                }
+    const data = await response.json();
+    setStats({
+        total:  data.total,
+        recent: data.recent,
+        role:   data.role,
+    });
+}
             } catch (err) {
                 // Dummy Data for UI showcase
                 setStats({
@@ -61,9 +62,28 @@ export default function Dashboard() {
                     </p>
                 </div>
                 <div>
-                    <Link to="/upload" style={{ background: 'var(--accent-secondary)', color: 'black', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', textDecoration: 'none', fontFamily: 'var(--font-display)', display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: '0 0 20px rgba(0, 229, 255, 0.3)' }}>
-                        <span style={{ fontSize: '1.2rem' }}>+</span> NEW ISSUANCE
-                    </Link>
+                   {(user?.role === 'admin' || user?.role === 'issuer') && (
+    <Link
+        to="/upload"
+        style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            background: 'transparent',
+            border: '1px solid var(--accent-primary)',
+            color: 'var(--accent-primary)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.85rem',
+            letterSpacing: '2px',
+            textDecoration: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+        }}
+    >
+        <span style={{ fontSize: '1.2rem' }}>+</span> NEW ISSUANCE
+    </Link>
+)}
                 </div>
             </div>
 

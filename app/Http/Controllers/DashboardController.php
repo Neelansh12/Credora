@@ -3,41 +3,64 @@
 namespace App\Http\Controllers;
 
 use App\Models\Certificate;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    /**
-     * Return dashboard statistics and recent certificates as JSON.
-     */
-    public function index(): JsonResponse
+    public function index(Request $request)
     {
-        $totalIssued  = Certificate::count();
-        $validCount   = Certificate::where('status', 'valid')->count();
-        $revokedCount = Certificate::where('status', 'revoked')->count();
-        $pendingCount = Certificate::where('status', 'pending')->count();
+        $user = Auth::user();
 
-        $recentCertificates = Certificate::with('issuer')
-            ->latest()
-            ->take(10)
-            ->get()
-            ->map(fn ($cert) => [
-                'id'               => $cert->id,
-                'student_name'     => $cert->student_name,
-                'certificate_name' => $cert->certificate_name,
-                'certificate_hash' => $cert->certificate_hash,
-                'status'           => $cert->status,
-                'blockchain_status'=> $cert->blockchain_status,
-                'blockchain_tx'    => $cert->blockchain_tx,
-                'issued_at'        => $cert->issued_at,
+        if (!$user) {
+            return response()->json([
+                'role'          => 'guest',
+                'total'         => 0,
+                'recent'        => [],
+                'valid_count'   => 0,
+                'revoked_count' => 0,
+                'pending_count' => 0,
             ]);
+        }
 
+        // Admin / Issuer — sees ALL certificates
+        if ($user->role === 'admin' || $user->role === 'issuer') {
+            $all = Certificate::latest()->get();
+            return response()->json([
+                'role'          => $user->role,
+                'total'         => $all->count(),
+                'valid_count'   => $all->where('status', 'valid')->count(),
+                'revoked_count' => $all->where('status', 'revoked')->count(),
+                'pending_count' => $all->where('status', 'pending')->count(),
+                'recent'        => $all->take(10)->map(fn($c) => [
+                    'id'               => $c->id,
+                    'student_name'     => $c->student_name,
+                    'certificate_name' => $c->certificate_name,
+                    'certificate_hash' => $c->certificate_hash,
+                    'status'           => $c->status,
+                    'blockchain_tx'    => $c->blockchain_tx,
+                    'issued_at'        => $c->created_at,
+                ])->values(),
+            ]);
+        }
+
+        // Regular user — sees only their own certificates
+        $mine = Certificate::where('student_email', $user->email)->latest()->get();
         return response()->json([
-            'total_issued'        => $totalIssued,
-            'valid_count'         => $validCount,
-            'revoked_count'       => $revokedCount,
-            'pending_count'       => $pendingCount,
-            'recent_certificates' => $recentCertificates,
+            'role'          => 'user',
+            'total'         => $mine->count(),
+            'valid_count'   => $mine->where('status', 'valid')->count(),
+            'revoked_count' => $mine->where('status', 'revoked')->count(),
+            'pending_count' => 0,
+            'recent'        => $mine->map(fn($c) => [
+                'id'               => $c->id,
+                'student_name'     => $c->student_name,
+                'certificate_name' => $c->certificate_name,
+                'certificate_hash' => $c->certificate_hash,
+                'status'           => $c->status,
+                'blockchain_tx'    => $c->blockchain_tx,
+                'issued_at'        => $c->created_at,
+            ])->values(),
         ]);
     }
 }

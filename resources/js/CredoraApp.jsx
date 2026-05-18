@@ -1,5 +1,5 @@
 import '../css/app.css';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -12,52 +12,76 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Guide from './pages/Guide';
 
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-    if (!isAuth) {
-        return <Navigate to="/login" replace />;
-    }
+const AdminRoute = ({ user, children }) => {
+    if (!user) return <Navigate to="/login" replace />;
+    if (user.role !== 'admin' && user.role !== 'issuer') return <Navigate to="/verify" replace />;
     return children;
 };
 
-// Guest Route Component (redirects to dashboard if logged in)
-const GuestRoute = ({ children }) => {
-    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-    if (isAuth) {
-        return <Navigate to="/dashboard" replace />;
-    }
+const ProtectedRoute = ({ user, children }) => {
+    if (!user) return <Navigate to="/login" replace />;
     return children;
 };
 
-function CredoraApp() {
-    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+function App() {
+    const [user, setUser] = useState(undefined); // undefined = not checked yet
+    const [authLoading, setAuthLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/api/me', {
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin',
+        })
+            .then(r => r.json())
+            .then(data => setUser(data.authenticated ? data : null))
+            .catch(() => setUser(null))
+            .finally(() => setAuthLoading(false));
+    }, []);
+
+    if (authLoading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#000' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid #ff2a85', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+            </div>
+        );
+    }
+
     return (
-        <div className="relative min-h-screen">
+        <BrowserRouter>
             <ParticleBackground />
-            <div className="perspective-grid" />
-            <Navbar />
-            <main className="relative z-10" style={{ paddingTop: '100px', paddingBottom: '64px' }}>
-                <Routes>
-                    <Route path="/" element={<Navigate to={isAuth ? "/dashboard" : "/verify"} replace />} />
-                    <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
-                    <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
-                    <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
-                    <Route path="/verify" element={<Verify />} />
-                    <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                    <Route path="/guide" element={<Guide />} />
-                    <Route path="/certificate/:id" element={<CertificateDetail />} />
-                </Routes>
-            </main>
-        </div>
+            <Navbar user={user} setUser={setUser} />
+            <Routes>
+                {/* Public */}
+                <Route path="/login"    element={<Login setUser={setUser} />} />
+                <Route path="/register" element={<Register setUser={setUser} />} />
+                <Route path="/verify"   element={<Verify />} />
+                <Route path="/guide"    element={<Guide />} />
+
+                {/* Admin / Issuer only */}
+                <Route path="/upload" element={
+                    <AdminRoute user={user}>
+                        <Upload />
+                    </AdminRoute>
+                } />
+
+                {/* Any logged-in user */}
+                <Route path="/dashboard" element={
+                    <ProtectedRoute user={user}>
+                        <Dashboard user={user} />
+                    </ProtectedRoute>
+                } />
+                <Route path="/certificate/:id" element={
+                    <ProtectedRoute user={user}>
+                        <CertificateDetail user={user} />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/"   element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
+                <Route path="*"   element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
+            </Routes>
+        </BrowserRouter>
     );
 }
 
-// Mount only once
-const container = document.getElementById('app');
-const root = createRoot(container);
-root.render(
-    <BrowserRouter>
-        <CredoraApp />
-    </BrowserRouter>
-);
+const root = createRoot(document.getElementById('app'));
+root.render(<App />);

@@ -1,33 +1,50 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-export default function Navbar() {
+export default function Navbar({ user, setUser }) {
     const location = useLocation();
     const [mobileOpen, setMobileOpen] = useState(false);
 
-    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    const isAuth = !!user;
 
-    const handleLogout = () => {
-        localStorage.removeItem('isAuthenticated');
-        window.location.href = '/verify';
+    const handleLogout = async () => {
+        const xsrfToken = decodeURIComponent(
+            document.cookie
+                .split('; ')
+                .find(row => row.startsWith('XSRF-TOKEN='))
+                ?.split('=')[1] || ''
+        );
+        await fetch('/logout', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': xsrfToken,
+            },
+            credentials: 'same-origin',
+        });
+        setUser(null);
+        window.location.href = '/login';
     };
 
     const visitorLinks = [
         { path: '/verify', label: 'VERIFY', icon: '🔍' },
-        { path: '/guide', label: 'GUIDE', icon: '📖' },
-        { path: '/login', label: 'LOGIN', icon: '⎋' },
+        { path: '/guide',  label: 'GUIDE',  icon: '📖' },
+        { path: '/login',  label: 'LOGIN',  icon: '⎋' },
     ];
 
     const authLinks = [
         { path: '/dashboard', label: 'DASHBOARD', icon: '◫' },
-        { path: '/upload', label: 'ISSUE', icon: '⛓' },
+        // ISSUE only for admin/issuer:
+        ...(user?.role === 'admin' || user?.role === 'issuer'
+            ? [{ path: '/upload', label: 'ISSUE', icon: '⛓' }]
+            : []),
         { path: '/verify', label: 'VERIFY', icon: '🔍' },
-        { path: '/guide', label: 'GUIDE', icon: '📖' },
+        { path: '/guide',  label: 'GUIDE',  icon: '📖' },
     ];
 
     const links = isAuth ? authLinks : visitorLinks;
-
     const isActive = (path) => location.pathname === path;
+
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50" style={{

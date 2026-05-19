@@ -6,9 +6,11 @@ export default function Navbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    const role = localStorage.getItem('role');
 
     const handleLogout = () => {
         localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('role');
         window.location.href = '/verify';
     };
 
@@ -20,7 +22,7 @@ export default function Navbar() {
 
     const authLinks = [
         { path: '/dashboard', label: 'DASHBOARD', icon: '◫' },
-        { path: '/upload', label: 'ISSUE', icon: '⛓' },
+        ...(role === 'admin' ? [{ path: '/upload', label: 'ISSUE', icon: '⛓' }] : []),
         { path: '/verify', label: 'VERIFY', icon: '🔍' },
         { path: '/guide', label: 'GUIDE', icon: '📖' },
     ];

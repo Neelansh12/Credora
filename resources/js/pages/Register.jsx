@@ -6,7 +6,7 @@ import GlitchText from '../components/GlitchText';
 export default function Register() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        name: '', email: '', password: '', password_confirmation: ''
+        name: '', email: '', password: '', password_confirmation: '', role: 'user'
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -30,16 +30,33 @@ export default function Register() {
             return;
         }
 
-        setTimeout(() => {
-            if (formData.name && formData.email && formData.password) {
-                setIsLoading(false);
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || ''
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
                 localStorage.setItem('isAuthenticated', 'true');
-                window.location.href = '/dashboard';
+                localStorage.setItem('role', data.user.role);
+                // Admins go to dashboard, Users go to dashboard too but they will see a filtered view!
+                navigate('/dashboard');
             } else {
-                setError('DATA_MISSING: ALL FIELDS REQUIRED');
-                setIsLoading(false);
+                setError(data.message || 'REGISTRATION FAILED');
             }
-        }, 1500);
+        } catch (err) {
+            setError('NETWORK ERROR: UNABLE TO CONNECT TO SERVER');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -61,14 +78,12 @@ export default function Register() {
             </div>
 
             <div style={{ position: 'relative', marginTop: '20px' }}>
-                {/* Decorative Corner Brackets (Outside Card) */}
                 <div style={{ position: 'absolute', top: '-10px', left: '-10px', width: '30px', height: '30px', borderTop: '3px solid var(--accent-secondary)', borderLeft: '3px solid var(--accent-secondary)', zIndex: 20 }} />
                 <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: '30px', height: '30px', borderTop: '3px solid var(--accent-secondary)', borderRight: '3px solid var(--accent-secondary)', zIndex: 20 }} />
                 <div style={{ position: 'absolute', bottom: '-10px', left: '-10px', width: '30px', height: '30px', borderBottom: '3px solid var(--accent-secondary)', borderLeft: '3px solid var(--accent-secondary)', zIndex: 20 }} />
                 <div style={{ position: 'absolute', bottom: '-10px', right: '-10px', width: '30px', height: '30px', borderBottom: '3px solid var(--accent-secondary)', borderRight: '3px solid var(--accent-secondary)', zIndex: 20 }} />
 
                 <CyberCard glowColor="var(--accent-secondary)" style={{ border: '1px solid rgba(0, 229, 255, 0.2)' }}>
-                    {/* Scanner line overlay */}
                     <div style={{ position: 'absolute', top: `${scanPos}%`, left: '0', right: '0', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.5), transparent)', boxShadow: '0 0 10px var(--accent-secondary)', opacity: 0.15, pointerEvents: 'none', zIndex: 0 }} />
 
                     {error && (
@@ -78,83 +93,38 @@ export default function Register() {
                     )}
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-3 relative z-10 pt-1 pb-1">
-                        {/* Terminal styled inputs */}
                         <div style={{ paddingLeft: '10px', borderLeft: '2px solid rgba(0, 229, 255, 0.4)' }}>
                             <label style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--accent-secondary)', letterSpacing: '1px', marginBottom: '4px' }}>
                                 <span>&gt; ENTITY_ALIAS</span>
                             </label>
-                            <input
-                                type="text"
-                                name="name"
-                                className="cyber-input"
-                                style={{ background: 'rgba(10, 2, 20, 0.8)', border: '1px solid rgba(0, 229, 255, 0.3)', fontFamily: 'var(--font-body)', fontSize: '0.9rem', padding: '8px 12px' }}
-                                placeholder="Corp / John Doe"
-                                value={formData.name}
-                                onChange={handleChange}
-                                required
-                            />
+                            <input type="text" name="name" className="cyber-input" style={{ background: 'rgba(10, 2, 20, 0.8)', border: '1px solid rgba(0, 229, 255, 0.3)', fontFamily: 'var(--font-body)', fontSize: '0.9rem', padding: '8px 12px' }} placeholder="Corp / John Doe" value={formData.name} onChange={handleChange} required />
                         </div>
 
                         <div style={{ paddingLeft: '10px', borderLeft: '2px solid rgba(0, 229, 255, 0.4)' }}>
                             <label style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--accent-secondary)', letterSpacing: '1px', marginBottom: '4px' }}>
                                 <span>&gt; COMMS_LINK</span>
                             </label>
-                            <input
-                                type="email"
-                                name="email"
-                                className="cyber-input"
-                                style={{ background: 'rgba(10, 2, 20, 0.8)', border: '1px solid rgba(0, 229, 255, 0.3)', fontFamily: 'var(--font-body)', fontSize: '0.9rem', padding: '8px 12px' }}
-                                placeholder="operator@credora.net"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                            />
+                            <input type="email" name="email" className="cyber-input" style={{ background: 'rgba(10, 2, 20, 0.8)', border: '1px solid rgba(0, 229, 255, 0.3)', fontFamily: 'var(--font-body)', fontSize: '0.9rem', padding: '8px 12px' }} placeholder="operator@credora.net" value={formData.email} onChange={handleChange} required />
                         </div>
+
+
 
                         <div style={{ paddingLeft: '10px', borderLeft: '2px solid rgba(0, 229, 255, 0.4)' }}>
                             <label style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--accent-secondary)', letterSpacing: '1px', marginBottom: '4px' }}>
                                 <span>&gt; GEN_AUTH_KEY</span>
                             </label>
-                            <input
-                                type="password"
-                                name="password"
-                                className="cyber-input"
-                                style={{ background: 'rgba(10, 2, 20, 0.8)', border: '1px solid rgba(0, 229, 255, 0.3)', fontFamily: 'var(--font-body)', fontSize: '0.9rem', padding: '8px 12px', letterSpacing: '2px' }}
-                                placeholder="••••••••"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                            />
+                            <input type="password" name="password" className="cyber-input" style={{ background: 'rgba(10, 2, 20, 0.8)', border: '1px solid rgba(0, 229, 255, 0.3)', fontFamily: 'var(--font-body)', fontSize: '0.9rem', padding: '8px 12px', letterSpacing: '2px' }} placeholder="••••••••" value={formData.password} onChange={handleChange} required />
                         </div>
 
                         <div style={{ paddingLeft: '10px', borderLeft: '2px solid rgba(0, 229, 255, 0.4)' }}>
                             <label style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--accent-secondary)', letterSpacing: '1px', marginBottom: '4px' }}>
                                 <span>&gt; VERIFY_HASH</span>
                             </label>
-                            <input
-                                type="password"
-                                name="password_confirmation"
-                                className="cyber-input"
-                                style={{ background: 'rgba(10, 2, 20, 0.8)', border: '1px solid rgba(0, 229, 255, 0.3)', fontFamily: 'var(--font-body)', fontSize: '0.9rem', padding: '8px 12px', letterSpacing: '2px' }}
-                                placeholder="••••••••"
-                                value={formData.password_confirmation}
-                                onChange={handleChange}
-                                required
-                            />
+                            <input type="password" name="password_confirmation" className="cyber-input" style={{ background: 'rgba(10, 2, 20, 0.8)', border: '1px solid rgba(0, 229, 255, 0.3)', fontFamily: 'var(--font-body)', fontSize: '0.9rem', padding: '8px 12px', letterSpacing: '2px' }} placeholder="••••••••" value={formData.password_confirmation} onChange={handleChange} required />
                         </div>
 
                         <div style={{ marginTop: '4px' }}>
-                            <button 
-                                type="submit" 
-                                className="cyber-btn w-full"
-                                style={{ 
-                                    padding: '16px',
-                                    background: 'linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(188, 19, 254, 0.15))',
-                                    borderColor: 'var(--accent-secondary)',
-                                    color: 'var(--accent-secondary)'
-                                }}
-                                disabled={isLoading}
-                            >
+                            <button type="submit" className="cyber-btn w-full" style={{ padding: '16px', background: 'linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(188, 19, 254, 0.15))', borderColor: 'var(--accent-secondary)', color: 'var(--accent-secondary)' }} disabled={isLoading}>
                                 {isLoading ? (
                                     <>
                                         <span className="inline-block w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--bg-void)', borderTopColor: 'transparent' }} />

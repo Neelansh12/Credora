@@ -30,19 +30,34 @@ export default function Login() {
         setIsLoading(true);
         setError('');
 
-        setTimeout(() => {
-            if (formData.email && formData.password === 'admin123') {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || ''
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
                 setIsLoading(false);
                 localStorage.setItem('isAuthenticated', 'true');
-                window.location.href = '/dashboard';
-            } else if (formData.email && formData.password) {
-                setError('AUTH_FAILED: INVALID CREDENTIALS');
-                setIsLoading(false);
+                localStorage.setItem('role', data.user.role);
+                // Users and Admins both go to dashboard, the backend filters the data!
+                navigate('/dashboard');
             } else {
-                setError('DATA_MISSING: ALL FIELDS REQUIRED');
+                setError(data.message || 'AUTH_FAILED: INVALID CREDENTIALS');
                 setIsLoading(false);
             }
-        }, 1500);
+        } catch (err) {
+            setError('NETWORK ERROR: UNABLE TO CONNECT TO SERVER');
+            setIsLoading(false);
+        }
     };
 
     return (

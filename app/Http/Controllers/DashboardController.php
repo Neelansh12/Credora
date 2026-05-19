@@ -12,12 +12,20 @@ class DashboardController extends Controller
      */
     public function index(): JsonResponse
     {
-        $totalIssued  = Certificate::count();
-        $validCount   = Certificate::where('status', 'valid')->count();
-        $revokedCount = Certificate::where('status', 'revoked')->count();
-        $pendingCount = Certificate::where('status', 'pending')->count();
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $query = Certificate::query();
 
-        $recentCertificates = Certificate::with('issuer')
+        // If the user is not an admin, only show their own certificates
+        if ($user && $user->role === 'user') {
+            $query->where('student_email', $user->email);
+        }
+
+        $totalIssued  = (clone $query)->count();
+        $validCount   = (clone $query)->where('status', 'valid')->count();
+        $revokedCount = (clone $query)->where('status', 'revoked')->count();
+        $pendingCount = (clone $query)->where('status', 'pending')->count();
+
+        $recentCertificates = (clone $query)->with('issuer')
             ->latest()
             ->take(10)
             ->get()

@@ -14,8 +14,8 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['admin', 'issuer', 'verifier'])
-                  ->default('verifier');
+            $table->enum('role', ['admin', 'user'])
+                  ->default('user');
             $table->string('wallet_address', 42)
                   ->nullable()
                   ->comment('Polygon wallet address 0x...');

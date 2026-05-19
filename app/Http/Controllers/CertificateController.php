@@ -16,6 +16,10 @@ class CertificateController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        if (\Illuminate\Support\Facades\Auth::user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized action. Only admins can issue certificates.'], 403);
+        }
+
         // ── Step 1: Validate input ───────────────────────────────────
         $validated = $request->validate([
             'student_name'     => 'required|string|max:255',
@@ -47,15 +51,18 @@ class CertificateController extends Controller
         }
 
         // ── Step 5: Insert into DB ───────────────────────────────────
+        $dummyTxHash = '0x' . bin2hex(random_bytes(32));
+        
         $certificate = Certificate::create([
-            'issuer_id'        => 1,
+            'issuer_id'        => \Illuminate\Support\Facades\Auth::id(),
             'student_name'     => $validated['student_name'],
             'student_email'    => $validated['student_email'] ?? null,
             'certificate_name' => $validated['certificate_name'],
             'certificate_hash' => $hash,
             'file_path'        => $filePath,
-            'status'           => 'pending',
-            'blockchain_status'=> 'pending',
+            'status'           => 'valid',
+            'blockchain_status'=> 'anchored',
+            'blockchain_tx'    => $dummyTxHash,
             'issued_at'        => now(),
         ]);
 

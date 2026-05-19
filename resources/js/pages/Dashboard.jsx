@@ -10,14 +10,23 @@ export default function Dashboard() {
 
     useEffect(() => {
         const fetchDashboardData = async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1000);
+
             try {
                 const response = await fetch('/api/dashboard', {
                     headers: { 'Accept': 'application/json' },
-                    credentials: 'same-origin'
+                    credentials: 'same-origin',
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
+
                 if (response.ok) {
                     const data = await response.json();
-                    setStats(data);
+                    setStats({
+                        total: data.total_issued !== undefined ? data.total_issued : data.total,
+                        recent: data.recent_certificates || data.recent || []
+                    });
                 } else {
                     // Fallback to dummy data if not connected
                     throw new Error("No backend");
@@ -54,17 +63,24 @@ export default function Dashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px', borderBottom: '1px solid rgba(0, 229, 255, 0.2)', paddingBottom: '20px' }}>
                 <div>
                     <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', margin: 0, color: 'white', letterSpacing: '2px' }}>
-                        COMMAND <span style={{ color: 'var(--accent-secondary)' }}>CENTER</span>
+                        {localStorage.getItem('role') === 'admin' ? (
+                            <>COMMAND <span style={{ color: 'var(--accent-secondary)' }}>CENTER</span></>
+                        ) : (
+                            <>MY <span style={{ color: 'var(--accent-secondary)' }}>CREDENTIALS</span></>
+                        )}
                     </h1>
                     <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', marginTop: '8px', letterSpacing: '1px' }}>
-                        SYSTEM STATUS: <span style={{ color: 'var(--success)' }}>ONLINE</span> | NETWORK: POLYGON
+                        {localStorage.getItem('role') === 'admin' ? 'SYSTEM STATUS: ' : 'VERIFIED ACCOUNT: '}
+                        <span style={{ color: 'var(--success)' }}>ONLINE</span> | NETWORK: POLYGON
                     </p>
                 </div>
+                {localStorage.getItem('role') === 'admin' && (
                 <div>
                     <Link to="/upload" style={{ background: 'var(--accent-secondary)', color: 'black', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', textDecoration: 'none', fontFamily: 'var(--font-display)', display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: '0 0 20px rgba(0, 229, 255, 0.3)' }}>
                         <span style={{ fontSize: '1.2rem' }}>+</span> NEW ISSUANCE
                     </Link>
                 </div>
+                )}
             </div>
 
             {/* Top Metrics Row */}
@@ -72,7 +88,9 @@ export default function Dashboard() {
                 {/* Metric 1 */}
                 <div style={{ background: 'rgba(10, 2, 20, 0.6)', border: '1px solid rgba(0, 229, 255, 0.2)', borderRadius: '16px', padding: '24px', position: 'relative', overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', top: '-20px', right: '-20px', fontSize: '8rem', opacity: 0.05 }}>📄</div>
-                    <span style={{ display: 'block', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '2px', marginBottom: '8px' }}>TOTAL ISSUED</span>
+                    <span style={{ display: 'block', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '2px', marginBottom: '8px' }}>
+                        {localStorage.getItem('role') === 'admin' ? 'TOTAL ISSUED' : 'TOTAL EARNED'}
+                    </span>
                     <div style={{ fontSize: '3.5rem', fontFamily: 'var(--font-display)', color: 'var(--accent-secondary)', lineHeight: 1 }}>
                         {stats.total}
                     </div>

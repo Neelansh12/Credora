@@ -50,35 +50,37 @@ function App() {
         <BrowserRouter>
             <ParticleBackground />
             <Navbar user={user} setUser={setUser} />
-            <Routes>
-                {/* Public */}
-                <Route path="/login"    element={<Login setUser={setUser} />} />
-                <Route path="/register" element={<Register setUser={setUser} />} />
-                <Route path="/verify"   element={<Verify />} />
-                <Route path="/guide"    element={<Guide />} />
+            <div style={{ paddingTop: '80px', minHeight: '100vh', position: 'relative', zIndex: 2 }}>
+                <Routes>
+                    {/* Public */}
+                    <Route path="/login"    element={<Login setUser={setUser} />} />
+                    <Route path="/register" element={<Register setUser={setUser} />} />
+                    <Route path="/verify"   element={<Verify />} />
+                    <Route path="/guide"    element={<Guide />} />
 
-                {/* Admin / Issuer only */}
-                <Route path="/upload" element={
-                    <AdminRoute user={user}>
-                        <Upload />
-                    </AdminRoute>
-                } />
+                    {/* Admin / Issuer only */}
+                    <Route path="/upload" element={
+                        <AdminRoute user={user}>
+                            <Upload />
+                        </AdminRoute>
+                    } />
 
-                {/* Any logged-in user */}
-                <Route path="/dashboard" element={
-                    <ProtectedRoute user={user}>
-                        <Dashboard user={user} />
-                    </ProtectedRoute>
-                } />
-                <Route path="/certificate/:id" element={
-                    <ProtectedRoute user={user}>
-                        <CertificateDetail user={user} />
-                    </ProtectedRoute>
-                } />
+                    {/* Any logged-in user */}
+                    <Route path="/dashboard" element={
+                        <ProtectedRoute user={user}>
+                            <Dashboard user={user} />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/certificate/:id" element={
+                        <ProtectedRoute user={user}>
+                            <CertificateDetail user={user} />
+                        </ProtectedRoute>
+                    } />
 
-                <Route path="/"   element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
-                <Route path="*"   element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
-            </Routes>
+                    <Route path="/"   element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
+                    <Route path="*"   element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
+                </Routes>
+            </div>
         </BrowserRouter>
     );
 }

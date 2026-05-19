@@ -192,7 +192,7 @@ export default function ParticleBackground() {
         <canvas
             ref={canvasRef}
             className="fixed inset-0 pointer-events-none"
-            style={{ zIndex: 1, filter: 'contrast(1.2)' }}
+            style={{ zIndex: -1, filter: 'contrast(1.2)' }}
         />
     );
 }

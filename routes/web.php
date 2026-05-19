@@ -65,31 +65,6 @@ Route::post('/logout', function (\Illuminate\Http\Request $request) {
 });
 
 
-Route::post('/register', function (\Illuminate\Http\Request $request) {
-    $data = $request->validate([
-        'name'     => 'required|string|max:255',
-        'email'    => 'required|email|unique:users,email',
-        'password' => 'required|string|min:8|confirmed',
-    ]);
-
-    $user = \App\Models\User::create([
-        'name'      => $data['name'],
-        'email'     => $data['email'],
-        'password'  => bcrypt($data['password']),
-        'role'      => 'user',        // ← always user, never admin
-        'is_active' => true,
-    ]);
-
-    \Illuminate\Support\Facades\Auth::login($user);
-    $request->session()->regenerate();
-
-    return response()->json([
-        'success' => true,
-        'role'    => $user->role,
-        'name'    => $user->name,
-        'email'   => $user->email,
-    ]);
-});
 
 Route::get('/api/me', function () {
     $user = Auth::user();
@@ -118,7 +93,6 @@ Route::get('/api/certificate/{id}', [CertificateController::class, 'showJson']);
 
 // Protected APIs
 Route::middleware('auth')->group(function () {
-    Route::get('/api/me', [AuthController::class, 'me']);
     Route::post('/upload', [CertificateController::class, 'store'])->name('upload.store');
     Route::get('/api/dashboard', [DashboardController::class, 'index']);
     Route::post('/api/revoke', [CertificateController::class, 'revokeJson']);

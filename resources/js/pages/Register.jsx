@@ -60,7 +60,7 @@ export default function Register({ setUser}) {
         if (response.ok && data.success) {
             // New users always get 'user' role — set state and redirect to verify
             if (setUser) setUser({ role: data.role, name: data.name, email: data.email });
-            window.location.href = '/verify';   // users go to verify, not dashboard
+            window.location.href = '/dashboard';
         } else {
             const msg = data.errors
                 ? Object.values(data.errors).flat().join(' | ')

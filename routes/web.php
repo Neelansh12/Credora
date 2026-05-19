@@ -106,12 +106,23 @@ Route::get('/api/me', function () {
 
 // ── API Routes (JSON) ────────────────────────────────────────────────
 
-Route::post('/upload', [CertificateController::class, 'store'])->name('upload.store');
-Route::post('/verify', [CertificateController::class, 'verifyJson'])->name('verify.json');
+use App\Http\Controllers\AuthController;
 
-Route::get('/api/dashboard', [DashboardController::class, 'index']);
+Route::post('/api/register', [AuthController::class, 'register']);
+Route::post('/api/login', [AuthController::class, 'login']);
+Route::post('/api/logout', [AuthController::class, 'logout']);
+
+// Public APIs
+Route::post('/verify', [CertificateController::class, 'verifyJson'])->name('verify.json');
 Route::get('/api/certificate/{id}', [CertificateController::class, 'showJson']);
-Route::post('/api/revoke', [CertificateController::class, 'revokeJson']);
+
+// Protected APIs
+Route::middleware('auth')->group(function () {
+    Route::get('/api/me', [AuthController::class, 'me']);
+    Route::post('/upload', [CertificateController::class, 'store'])->name('upload.store');
+    Route::get('/api/dashboard', [DashboardController::class, 'index']);
+    Route::post('/api/revoke', [CertificateController::class, 'revokeJson']);
+});
 
 // ── SPA Catch-all (MUST BE LAST) ─────────────────────────────────────
 Route::get('/{any}', function () {
